@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <title>Ritomis Pharmaceuticals - Online Stock Statement</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="assets/css/theme.css" rel="stylesheet" type="text/css" media="all" />
+    <link rel="preload" as="font" href="assets/fonts/Inter-UI-upright.var.woff2" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" as="font" href="assets/fonts/Inter-UI.var.woff2" type="font/woff2" crossorigin="anonymous">
+  </head>
+
+  <body>
+
+    <!-- Access key -->
+    <section id="mraccess" class="bg-primary-3 min-vh-100 py-5" style="display: block;">
+      <div class="container">
+        <div class="row justify-content-center pt-6">
+          <div class="col-xl-4 col-lg-5 col-md-6">
+            <div class="text-center mb-4">
+              <h2 class="mb-1 h1 text-light">Ritomis Pharmaceuticals</h2>
+              <h4 class="mb-1 text-light">Stock Statement</h4>
+              <hr class="bg-secondary">
+            </div>
+
+            <div class="form-group mb-4">
+              <input type="password" name="mr_code" id="mr_code" placeholder="enter your access key" class="form-control text-center">
+            </div>
+
+            <div class="form-group mb-4" style="display: none;" id="access_err_holder">
+              <div class="alert alert-danger" role="alert">
+                <span id="access_err_message"></span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <button id="stockrequest" class="btn-block btn btn-primary">Get Stock Statement</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stock statement output -->
+    <section id="mroutput" style="display: none;">
+            
+      <div class="container">
+
+        <div class="row justify-content-center mb-3">
+          <div class="col">
+            <a href="#" id="go_back">Go back</a> | <!-- <a href="#" id="refresh" onclick="stock_request()">Refresh</a> | --> <a href="#" id="print_ss" onclick="window:print()">Print</a>
+            <br><br>
+            <h2 class="mb-0">Ritomis Pharmaceuticals - Online Stock statement</h2>
+            <span class="text-muted">Date: <span id="date_range"></span></span>
+          </div>
+        </div>
+
+        <div class="row justify-content-center">
+          <div class="col">
+            <h4>Hey, <span id="company_name"></span></h4>
+          </div>
+        </div>
+
+        <div class="row justify-content-center">
+          <div class="col">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-center align-middle" rowspan="2">#</th>
+                  <th scope="col" class="text-center align-middle" rowspan="2">Item</th>
+                  <th scope="col" colspan="2" width="13%" class="text-center align-middle">Opening</th>
+                  <th scope="col" colspan="2" width="13%" class="text-center align-middle">Purchase</th>
+                  <th scope="col" colspan="2" width="13%" class="text-center align-middle">Purchase<br>Return</th>
+                  <th scope="col" colspan="2" width="13%" class="text-center align-middle">Sale</th>
+                  <th scope="col" colspan="2" width="13%" class="text-center align-middle">Sale<br>Return</th>
+                  <th scope="col" colspan="2" width="13%" class="text-center align-middle">Closing</th>
+                </tr>
+                <tr>
+                  <!-- <th scope="col" class="text-center"></th>
+                  <th scope="col" class="text-center"></th> -->
+                  <th scope="col" class="text-center">Qty</th>
+                  <th scope="col" class="text-center">Amt</th>
+                  <th scope="col" class="text-center">Qty</th>
+                  <th scope="col" class="text-center">Amt</th>
+                  <th scope="col" class="text-center">Qty</th>
+                  <th scope="col" class="text-center">Amt</th>
+                  <th scope="col" class="text-center">Qty</th>
+                  <th scope="col" class="text-center">Amt</th>
+                  <th scope="col" class="text-center">Qty</th>
+                  <th scope="col" class="text-center">Amt</th>
+                  <th scope="col" class="text-center">Qty</th>
+                  <th scope="col" class="text-center">Amt</th>
+                </tr>
+              </thead>
+              <tbody id="stock_rows">
+                
+              </tbody>
+
+              <thead id="stock_total_rows">
+              </thead>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <script type="text/javascript" src="assets/js/jquery.min.js"></script>
+    <script type="text/javascript" src="assets/js/bootstrap.js"></script>
+
+    <script type="text/javascript">
+
+      // Clean on go back
+      $("#go_back").click(function() {
+        $("#company_name").html("");
+        $("#stock_rows").html("");
+        $("#mr_code").val("");
+        $("#mroutput").hide();
+        $("#mraccess").show();
+        document.title = "Ritomis Pharmaceuticals - Online Stock Statement";
+      });
+
+      // hide error message when access key field is used
+      $("#mr_code").keypress(function() {
+        $("#access_err_holder").hide();
+      });
+
+      // listen for enter key
+      $("#mr_code").on("keyup", function(e) {
+        if (e.keyCode === 13) {
+          stock_request();
+        }
+      });
+
+      
+      // Fetch stock statement
+      $("#stockrequest").click(function() {
+        stock_request();
+      });
+
+      // stock request
+      function stock_request() {
+        let mr_code = $("#mr_code").val();
+
+        $.ajax({
+          url: "https://apis.ritomis.org/stock",
+          data: JSON.stringify({mr_code: mr_code, auth_code: 'youCanHackThisAuthCodeAndIDontCare'}),
+          type: "POST",
+          success: function (response) {
+            // Hide access key screen
+            $("#mraccess").hide();
+            $("#mroutput").show();
+            process_stock_data(response);
+          },
+          error: function (response) {
+            console.log(response.responseText);
+            $("#access_err_message").html("<strong>" + JSON.parse(response.responseText).error + "</strong><br>");
+            $("#access_err_holder").show();
+          }
+        });
+      }
+
+      // Process stock data to present in tabular format
+      function process_stock_data(stock_data) {
+          let company_name = stock_data.companyName;
+          $("#company_name").html(company_name);
+
+          let date_range = stock_data.dateRange;
+          $("#date_range").html(date_range);
+
+          document.title = "Ritomis Pharmaceuticals - " + company_name + " - Online Stock Statement";
+
+          let output_len = stock_data.stock.length;
+          if (output_len === 0) {
+            // Error message
+          } else {
+            let table_rows_html = "";
+
+            // total values
+            let total_openingQty = 0,
+                total_openingAmt = 0,
+                total_purchaseQty = 0,
+                total_purchaseAmt = 0,
+                total_purchaseReturnQty = 0,
+                total_purchaseReturnAmt = 0,
+                total_saleQty = 0,
+                total_saleAmt = 0,
+                total_saleReturnQty = 0,
+                total_saleReturnAmt = 0,
+                total_closingQty = 0,
+                total_closingAmt = 0;
+
+            for (let counter = 0; counter < output_len; counter++) {
+
+              row_num = counter + 1;
+              let curr_item = stock_data.stock[counter];
+              let item_details = curr_item.ITEM_NAME + '<br> <span class="text-muted">' + curr_item.UNIT + ", " + curr_item.PACKING + "</span>";
+              let openingQty        = Math.max(curr_item.Apr_Opening_Qty
+                      + curr_item.Pre_Purchases_Qty
+                      + curr_item.Pre_Purchases_FreeQty
+                      - curr_item.Pre_Sales_Qty
+                      - curr_item.Pre_Sales_FreeQty
+                      - curr_item.Pre_PurchaseReturns_Qty
+                      - curr_item.Pre_PurchaseReturns_FreeQty
+                      + curr_item.Pre_SaleReturn_Qty
+                      + curr_item.Pre_SaleReturns_FreeQty, 0),
+
+                  openingAmt        = (openingQty * curr_item.P_RATE) * (1 + curr_item.TAX_PER/100),
+
+                  purchaseQty       = (curr_item.Curr_Purchases_Qty + curr_item.Curr_Purchases_FreeQty),
+                  purchaseAmt       = curr_item.Curr_Purchases_Val,
+
+                  purchaseReturnQty = (curr_item.Curr_PurchaseReturns_Qty + curr_item.Curr_PurchaseReturns_FreeQty),
+                  purchaseReturnAmt = curr_item.Curr_PurchaseReturns_Val,
+
+                  saleQty           = (curr_item.Curr_Sales_Qty + curr_item.Curr_Sales_FreeQty),
+                  saleAmt           = curr_item.Curr_Sales_Val,
+
+                  saleReturnQty     = (curr_item.Curr_SaleReturns_Qty + curr_item.Curr_SaleReturns_FreeQty),
+                  saleReturnAmt     = curr_item.Curr_SaleReturns_Val,
+
+                  closingQty        = Math.max((openingQty + purchaseQty - purchaseReturnQty - saleQty + saleReturnQty), 0),
+
+                  closingAmt        = (closingQty * curr_item.P_RATE) * (1 + curr_item.TAX_PER/100);
+
+              table_rows_html += '<tr> \
+                                     <th scope="row" class="text-right">' + row_num + '</th> \
+                                     <td>' + item_details + '</td> \
+                                     <td class="text-right">'+ format_number(openingQty, 0) +'</td> \
+                                     <td class="text-right">'+ format_number(openingAmt, 2) +'</td> \
+                                     <td class="text-right">'+ format_number(purchaseQty, 0) +'</td> \
+                                     <td class="text-right">'+ format_number(purchaseAmt, 2) +'</td> \
+                                     <td class="text-right">'+ format_number(purchaseReturnQty, 0) +'</td> \
+                                     <td class="text-right">'+ format_number(purchaseReturnAmt, 2) +'</td> \
+                                     <td class="text-right">'+ format_number(saleQty, 0) +'</td> \
+                                     <td class="text-right">'+ format_number(saleAmt, 2) +'</td> \
+                                     <td class="text-right">'+ format_number(saleReturnQty, 0) +'</td> \
+                                     <td class="text-right">'+ format_number(saleReturnAmt, 2) +'</td> \
+                                     <td class="text-right">'+ format_number(closingQty, 0) +'</td> \
+                                     <td class="text-right">'+ format_number(closingAmt, 2) +'</td> \
+                                     </tr>';
+
+              total_openingQty += openingQty,
+              total_openingAmt += openingAmt,
+              total_purchaseQty += purchaseQty,
+              total_purchaseAmt += purchaseAmt,
+              total_purchaseReturnQty += purchaseReturnQty,
+              total_purchaseReturnAmt += purchaseReturnAmt,
+              total_saleQty += saleQty,
+              total_saleAmt += saleAmt,
+              total_saleReturnQty += saleReturnQty,
+              total_saleReturnAmt += saleReturnAmt,
+              total_closingQty += closingQty,
+              total_closingAmt += closingAmt;
+
+            } // end of stock loop
+
+            $("#stock_rows").html(table_rows_html); // add stock rows
+
+            let table_total_row_html = '<tr> \
+                                   <th scope="row" colspan="2" class="text-center">Total</th> \
+                                   <th class="text-right">'+ format_number(total_openingQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(total_openingAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(total_purchaseQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(total_purchaseAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(total_purchaseReturnQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(total_purchaseReturnAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(total_saleQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(total_saleAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(total_saleReturnQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(total_saleReturnAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(total_closingQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(total_closingAmt, 2) +'</th> \
+                                   </tr>';
+
+            $("#stock_total_rows").html(table_total_row_html); // add total row
+
+          }
+      }
+
+      function format_number(num, precision)
+      {
+        if (num === 0) return '<span class="text-muted">-</span>';
+
+        num = Math.round(num, precision);
+        nStr = '' + num;
+        x = nStr.split('.');
+        x1 = x[0];
+        x2 = x.length > 1 ? '.' + x[1] : '';
+        var rgx = /(\d+)(\d{3})/;
+        while (rgx.test(x1)) {
+          x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        }
+        return x1 + x2;
+      }
+
+    </script>
+
+  </body>
+
+</html>
