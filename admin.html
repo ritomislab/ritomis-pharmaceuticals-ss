@@ -107,8 +107,7 @@
         let access_otp = $("#mr_code").val();
 
         $.ajax({
-            //url: "https://apis.ritomis.org/stock",
-            url: "http://127.0.0.1:8000/stockall",
+            url: "https://apis.ritomis.org/stockall",
             data: JSON.stringify({totp: access_otp}),
             type: "POST",
             success: function (response) {
