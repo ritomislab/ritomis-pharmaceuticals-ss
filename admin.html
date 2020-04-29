@@ -55,14 +55,80 @@
             </div>
         </div>
 
-        <div class="row justify-content-center mb-6">
-            <div class="col">
-                <h6>Navigation: Companies List</h6>
-                <span id="companies-navigation-list">Hello</span>
+        <!-- Tabbed menu for summary / detailed -->
+        <div class="row align-items-center justify-content-center mb-2 pb-2">
+            <div class="col-auto">
+                <ul class="nav" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link btn active" href="#summary-view" id="day-one-tab" data-toggle="tab" aria-controls="day-one" role="tab" aria-selected="true">Summary</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn" href="#detailed-view" id="day-two-tab" data-toggle="tab" aria-controls="day-two" role="tab" aria-selected="false">Detailed</a>
+                    </li>
+                </ul>
             </div>
         </div>
 
-        <div id="all-stock-details">
+        <div class="tab-content aos-init aos-animate" data-aos="fade-up">
+
+            <div id="summary-view" class="list-group list-group-flush tab-pane fade active show" role="tabpanel" aria-labelledby="day-one-tab">
+
+                <div id="all-stock-summary">
+                    <div class="row justify-content-center mb-6">
+                        <div class="col">
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th scope="col" class="text-center align-middle" rowspan="2">#</th>
+                                    <th scope="col" class="text-center align-middle" rowspan="2">Company</th>
+                                    <th scope="col" colspan="2" width="13%" class="text-center align-middle">Opening</th>
+                                    <th scope="col" colspan="2" width="13%" class="text-center align-middle">Purchase</th>
+                                    <th scope="col" colspan="2" width="13%" class="text-center align-middle">Purchase<br>Return</th>
+                                    <th scope="col" colspan="2" width="13%" class="text-center align-middle">Sale</th>
+                                    <th scope="col" colspan="2" width="13%" class="text-center align-middle">Sale<br>Return</th>
+                                    <th scope="col" colspan="2" width="13%" class="text-center align-middle">Closing</th>
+                                </tr>
+                                <tr>
+                                    <!-- <th scope="col" class="text-center"></th>
+                                    <th scope="col" class="text-center"></th> -->
+                                    <th scope="col" class="text-center">Qty</th>
+                                    <th scope="col" class="text-center">Amt</th>
+                                    <th scope="col" class="text-center">Qty</th>
+                                    <th scope="col" class="text-center">Amt</th>
+                                    <th scope="col" class="text-center">Qty</th>
+                                    <th scope="col" class="text-center">Amt</th>
+                                    <th scope="col" class="text-center">Qty</th>
+                                    <th scope="col" class="text-center">Amt</th>
+                                    <th scope="col" class="text-center">Qty</th>
+                                    <th scope="col" class="text-center">Amt</th>
+                                    <th scope="col" class="text-center">Qty</th>
+                                    <th scope="col" class="text-center">Amt</th>
+                                </tr>
+                                </thead>
+
+                                <tbody id="summary-body">
+                                </tbody>
+
+                                <thead id="summary-total">
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="detailed-view" class="list-group list-group-flush tab-pane fade" role="tabpanel" aria-labelledby="day-two-tab">
+                <div class="row justify-content-center mb-6">
+                    <div class="col">
+                        <h6>Navigation: Companies List</h6>
+                        <span id="companies-navigation-list">Hello</span>
+                    </div>
+                </div>
+
+                <div id="all-stock-details">
+                </div>
+            </div>
         </div>
 
     </div>
@@ -102,12 +168,27 @@
         stock_request();
     });
 
+    // Global quantities
+    let overall_openingQty = 0,
+        overall_openingAmt = 0,
+        overall_purchaseQty = 0,
+        overall_purchaseAmt = 0,
+        overall_purchaseReturnQty = 0,
+        overall_purchaseReturnAmt = 0,
+        overall_saleQty = 0,
+        overall_saleAmt = 0,
+        overall_saleReturnQty = 0,
+        overall_saleReturnAmt = 0,
+        overall_closingQty = 0,
+        overall_closingAmt = 0;
+
     // stock request
     function stock_request() {
         let access_otp = $("#mr_code").val();
 
         $.ajax({
-            url: "https://apis.ritomis.org/stockall",
+            // url: "https://apis.ritomis.org/stockall",
+            url: "http://127.0.0.1:8000/stockall",
             data: JSON.stringify({totp: access_otp}),
             type: "POST",
             success: function (response) {
@@ -133,30 +214,54 @@
 
         let navigation_html = "";
         let all_stock_html = "";
+        let all_stock_html_summary = "";
+        let company_counter = 0;
 
         Object.keys(all_stock.stockall).forEach(function(key_gr) {
+
+            company_counter = company_counter + 1;
 
             // Populate navigation
             navigation_html = navigation_html + `
                 <a href="#${key_gr}" style="text-decoration: underline dotted;">${all_stock.stockall[key_gr].comp}</a>&nbsp;<strong>•</strong>&nbsp;
             `;
 
-            all_stock_html = all_stock_html + process_stock_data(all_stock.stockall[key_gr], key_gr);
+            let html_output = process_stock_data(all_stock.stockall[key_gr], key_gr, company_counter);
+            all_stock_html = all_stock_html + html_output.detailed;
+            all_stock_html_summary = all_stock_html_summary + html_output.summary;
         });
+
+        let all_stock_html_summary_total = '<tr> \
+                                   <th scope="row" colspan="2" class="text-center">Total</th> \
+                                   <th class="text-right">'+ format_number(overall_openingQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_openingAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_purchaseQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_purchaseAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_purchaseReturnQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_purchaseReturnAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_saleQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_saleAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_saleReturnQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_saleReturnAmt, 2) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_closingQty, 0) +'</th> \
+                                   <th class="text-right">'+ format_number(overall_closingAmt, 2) +'</th> \
+                                   </tr>';
 
         // Populate HTML
         $('#companies-navigation-list').html(navigation_html.slice(0, -30));
         $('#all-stock-details').html(all_stock_html);
+        $('#summary-body').html(all_stock_html_summary);
+        $('#summary-total').html(all_stock_html_summary_total);
 
     }
 
-
-    function process_stock_data(stock_data, group_code) {
+    function process_stock_data(stock_data, group_code, company_counter) {
 
         let company_name = stock_data.comp;
         let output_len = stock_data.stock.length;
         let table_rows_html = "";
         let table_total_row_html = "";
+        let table_total_row_html_summary = "";
 
         if (output_len === 0) {
             // Error
@@ -256,6 +361,36 @@
                                    <th class="text-right">'+ format_number(total_closingQty, 0) +'</th> \
                                    <th class="text-right">'+ format_number(total_closingAmt, 2) +'</th> \
                                    </tr>';
+
+            table_total_row_html_summary = '<tr> \
+                                   <th scope="row" class="text-center">' + company_counter + '</th> \
+                                   <td class="text-left"><a href="javascript:goto_company_details(\'' + group_code + '\')">' + company_name + '</a></td> \
+                                   <td class="text-right">'+ format_number(total_openingQty, 0) +'</td> \
+                                   <td class="text-right">'+ format_number(total_openingAmt, 2) +'</td> \
+                                   <td class="text-right">'+ format_number(total_purchaseQty, 0) +'</td> \
+                                   <td class="text-right">'+ format_number(total_purchaseAmt, 2) +'</td> \
+                                   <td class="text-right">'+ format_number(total_purchaseReturnQty, 0) +'</td> \
+                                   <td class="text-right">'+ format_number(total_purchaseReturnAmt, 2) +'</td> \
+                                   <td class="text-right">'+ format_number(total_saleQty, 0) +'</td> \
+                                   <td class="text-right">'+ format_number(total_saleAmt, 2) +'</td> \
+                                   <td class="text-right">'+ format_number(total_saleReturnQty, 0) +'</td> \
+                                   <td class="text-right">'+ format_number(total_saleReturnAmt, 2) +'</td> \
+                                   <td class="text-right">'+ format_number(total_closingQty, 0) +'</td> \
+                                   <td class="text-right">'+ format_number(total_closingAmt, 2) +'</td> \
+                                   </tr>';
+
+            overall_openingQty = overall_openingQty + total_openingQty;
+            overall_openingAmt = overall_openingAmt + total_openingAmt;
+            overall_purchaseQty = overall_purchaseQty + total_purchaseQty;
+            overall_purchaseAmt = overall_purchaseAmt + total_purchaseAmt;
+            overall_purchaseReturnQty = overall_purchaseReturnQty + total_purchaseReturnQty;
+            overall_purchaseReturnAmt = overall_purchaseReturnAmt + total_purchaseReturnAmt;
+            overall_saleQty = overall_saleQty + total_saleQty;
+            overall_saleAmt = overall_saleAmt + total_saleAmt;
+            overall_saleReturnQty = overall_saleReturnQty + total_saleReturnQty;
+            overall_saleReturnAmt = overall_saleReturnAmt + total_saleReturnAmt;
+            overall_closingQty = overall_closingQty + total_closingQty;
+            overall_closingAmt = overall_closingAmt + total_closingAmt;
         }
 
         let company_html = `
@@ -264,7 +399,7 @@
                     <h4 id="${group_code}">${company_name}</h4>
                 </div>
                 <div class="col-6 text-right">
-                    <a href="#top" style="text-decoration: underline dotted;">Back to navigation</a>
+                    <a href="#top" style="text-decoration: underline dotted;">Back to navigation</a>&nbsp;|&nbsp;<a href="#" onclick="goto_summary();" style="text-decoration: underline dotted;">Back to summary</a>
                 </div>
             </div>
 
@@ -311,8 +446,24 @@
             </div>
         </div>
         `;
-        return company_html;
 
+        return {detailed: company_html, summary: table_total_row_html_summary};
+
+    }
+
+    function goto_company_details(group_code) {
+        $("#day-two-tab").click();
+
+        setTimeout(
+            function()
+            {
+                let fragment = "#" + group_code;
+                $(fragment).get(0).scrollIntoView();
+            }, 1000);
+    }
+
+    function goto_summary() {
+        $("#day-one-tab").click();
     }
 
     function format_number(num, precision)
