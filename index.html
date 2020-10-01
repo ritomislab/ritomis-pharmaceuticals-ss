@@ -190,9 +190,11 @@
                 total_closingQty = 0,
                 total_closingAmt = 0;
 
+            let row_num = 0;
+
             for (let counter = 0; counter < output_len; counter++) {
 
-              row_num = counter + 1;
+
               let curr_item = stock_data.stock[counter];
               let item_details = curr_item.ITEM_NAME + '<br> <span class="text-muted">' + curr_item.UNIT + ", " + curr_item.PACKING + "</span>";
               let openingQty        = Math.max(curr_item.Apr_Opening_Qty
@@ -223,35 +225,42 @@
 
                   closingAmt        = (closingQty * curr_item.P_RATE) * (1 + curr_item.TAX_PER/100);
 
-              table_rows_html += '<tr> \
-                                     <th scope="row" class="text-right">' + row_num + '</th> \
-                                     <td>' + item_details + '</td> \
-                                     <td class="text-right">'+ format_number(openingQty, 0) +'</td> \
-                                     <td class="text-right">'+ format_number(openingAmt, 2) +'</td> \
-                                     <td class="text-right">'+ format_number(purchaseQty, 0) +'</td> \
-                                     <td class="text-right">'+ format_number(purchaseAmt, 2) +'</td> \
-                                     <td class="text-right">'+ format_number(purchaseReturnQty, 0) +'</td> \
-                                     <td class="text-right">'+ format_number(purchaseReturnAmt, 2) +'</td> \
-                                     <td class="text-right">'+ format_number(saleQty, 0) +'</td> \
-                                     <td class="text-right">'+ format_number(saleAmt, 2) +'</td> \
-                                     <td class="text-right">'+ format_number(saleReturnQty, 0) +'</td> \
-                                     <td class="text-right">'+ format_number(saleReturnAmt, 2) +'</td> \
-                                     <td class="text-right">'+ format_number(closingQty, 0) +'</td> \
-                                     <td class="text-right">'+ format_number(closingAmt, 2) +'</td> \
-                                     </tr>';
+              // Product item row when quantity isn't zero
+              if (openingQty > 0 || purchaseQty > 0 || purchaseReturnQty > 0 || saleQty > 0 || saleReturnQty > 0) {
 
-              total_openingQty += openingQty,
-              total_openingAmt += openingAmt,
-              total_purchaseQty += purchaseQty,
-              total_purchaseAmt += purchaseAmt,
-              total_purchaseReturnQty += purchaseReturnQty,
-              total_purchaseReturnAmt += purchaseReturnAmt,
-              total_saleQty += saleQty,
-              total_saleAmt += saleAmt,
-              total_saleReturnQty += saleReturnQty,
-              total_saleReturnAmt += saleReturnAmt,
-              total_closingQty += closingQty,
-              total_closingAmt += closingAmt;
+                row_num = row_num + 1;
+
+                table_rows_html += '<tr> \
+                                         <th scope="row" class="text-right">' + row_num + '</th> \
+                                         <td>' + item_details + '</td> \
+                                         <td class="text-right">' + format_number(openingQty, 0) + '</td> \
+                                         <td class="text-right">' + format_number(openingAmt, 2) + '</td> \
+                                         <td class="text-right">' + format_number(purchaseQty, 0) + '</td> \
+                                         <td class="text-right">' + format_number(purchaseAmt, 2) + '</td> \
+                                         <td class="text-right">' + format_number(purchaseReturnQty, 0) + '</td> \
+                                         <td class="text-right">' + format_number(purchaseReturnAmt, 2) + '</td> \
+                                         <td class="text-right">' + format_number(saleQty, 0) + '</td> \
+                                         <td class="text-right">' + format_number(saleAmt, 2) + '</td> \
+                                         <td class="text-right">' + format_number(saleReturnQty, 0) + '</td> \
+                                         <td class="text-right">' + format_number(saleReturnAmt, 2) + '</td> \
+                                         <td class="text-right">' + format_number(closingQty, 0) + '</td> \
+                                         <td class="text-right">' + format_number(closingAmt, 2) + '</td> \
+                                         </tr>';
+
+                total_openingQty += openingQty,
+                        total_openingAmt += openingAmt,
+                        total_purchaseQty += purchaseQty,
+                        total_purchaseAmt += purchaseAmt,
+                        total_purchaseReturnQty += purchaseReturnQty,
+                        total_purchaseReturnAmt += purchaseReturnAmt,
+                        total_saleQty += saleQty,
+                        total_saleAmt += saleAmt,
+                        total_saleReturnQty += saleReturnQty,
+                        total_saleReturnAmt += saleReturnAmt,
+                        total_closingQty += closingQty,
+                        total_closingAmt += closingAmt;
+
+              } // end of exclude zero quantity condition
 
             } // end of stock loop
 
